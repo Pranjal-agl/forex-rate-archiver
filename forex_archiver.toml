@@ -1,0 +1,11 @@
+# Runtime settings for forex-archiver. Every key can also be overridden with an
+# environment variable: FOREX_<KEY_IN_UPPERCASE>, e.g. FOREX_PCT_THRESHOLD=2.0
+# Defaults and meanings: forex_archiver/config.py. Threshold choice: reports/anomaly_eval.md
+
+anomaly_method = "pct"     # pct | mad | both  (pct + peers scored best: reports/anomaly_eval.md)
+pct_threshold  = 1.5       # percent change vs last good value
+mad_threshold  = 6.0       # robust z-score on log returns
+mad_window     = 20
+use_peers      = true      # net each move against the other banks' median move
+stale_days     = 5
+max_staleness_days = 5

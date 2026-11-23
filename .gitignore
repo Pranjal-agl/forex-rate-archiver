@@ -1,0 +1,16 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+.venv/
+build/
+
+# per-run outputs (uploaded as workflow artifacts, not committed)
+archiver.log
+run_report.json
+run_report.md
+snapshots/*
+# ...except snapshots that broke a parser: committed so the fix ships with a regression fixture
+!snapshots/failures/
