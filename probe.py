@@ -7,14 +7,7 @@ OUT = Path("probe_out"); OUT.mkdir(exist_ok=True)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 H = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/pdf,*/*;q=0.8", "Accept-Language": "en-US,en;q=0.9"}
 CANDIDATES = {
-  "sbiny_page": "https://sbinewyork.statebank/exchange-rate",
-  "sbi_pdf_new": "https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf",
-  "hdfc_pdf_new": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/resources/forex-rates/forex-rates.pdf",
-  "icici_corp_new": "https://www.icici.bank.in/corporate/global-markets/forex/forex-card-rate",
-  "icici_corp_old": "https://www.icicibank.com/corporate/global-markets/forex/forex-card-rate",
-  "icici_fac_old": "https://forex.icicibank.com/forexatclick/forms/MicroCardRateView.aspx",
-  "icici_fac_new": "https://forex.icici.bank.in/forexatclick/forms/MicroCardRateView.aspx",
-  "icici_if_new2": "https://instantforex.icici.bank.in/instantforex/Forms/MicroCardRateView.aspx",
+  "hdfc_pdf_current": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/discover-products/interest-rates/hdfc-bank-treasury-forex-card-rates.pdf",
 }
 summary = {}
 for name, url in CANDIDATES.items():
