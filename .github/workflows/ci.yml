@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    paths-ignore: ["data/**", "all_rates_history.csv", "dashboard/data.json", "snapshots/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package with dev extras
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check forex_archiver tests
+      - name: Tests (offline, against saved bank pages)
+        run: pytest --cov --cov-report=term-missing --cov-report=xml
+      - name: Import smoke test (the bug class that broke the archive for six months)
+        run: |
+          python -c "import forex_archiver.pipeline, forex_archiver.sources"
+          forex-archiver --help > /dev/null
+      - name: Coverage summary
+        if: matrix.python-version == '3.11'
+        run: |
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          r = ET.parse("coverage.xml").getroot()
+          print(f"### Coverage: {float(r.get('line-rate')) * 100:.1f}%")
+          EOF

@@ -355,6 +355,24 @@
   }
 
   .dashboard-hidden { display: none; }
+
+  /* ── health / quality panel ── */
+  .health-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px; margin-bottom:28px; }
+  .health-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .health-card .src { font-weight:700; letter-spacing:.04em; display:flex; justify-content:space-between; align-items:center; }
+  .health-card .meta { font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); margin-top:8px; line-height:1.7; }
+  .health-card .err { color:var(--down); font-size:12px; margin-top:6px; font-family:'DM Mono',monospace; word-break:break-word; }
+  .pill { font-family:'DM Mono',monospace; font-size:11px; padding:2px 8px; border-radius:99px; }
+  .pill.ok { background:rgba(34,197,94,.12); color:var(--up); }
+  .pill.bad { background:rgba(239,68,68,.12); color:var(--down); }
+  .suspect-badge { font-family:'DM Mono',monospace; font-size:10px; padding:2px 7px; border-radius:99px; background:rgba(239,68,68,.14); color:var(--down); cursor:help; }
+  tr.suspect td { opacity:.75; }
+  .section-title { font-size:13px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:8px 0 12px; }
+  .upload-section.compact { padding:14px; margin-bottom:24px; }
+  .upload-section.compact .upload-icon, .upload-section.compact p { display:none; }
+  .upload-section.compact h2 { font-size:14px; margin:0 0 8px; }
+  .anomaly-list { font-family:'DM Mono',monospace; font-size:12px; line-height:1.8; color:var(--text); max-height:220px; overflow:auto; }
+  .anomaly-list .m { color:var(--down); }
 </style>
 </head>
 <body>
@@ -367,7 +385,7 @@
         <div class="logo-icon">₹</div>
         <div>
           <h1>Forex Rate <span>Archiver</span></h1>
-          <div class="subtitle">USD → INR · SBI · HDFC · ICICI · Automated Daily</div>
+          <div class="subtitle">USD → INR · SBI NY · HDFC · ICICI · daily on GitHub Actions</div>
         </div>
       </div>
       <div class="live-badge">
@@ -377,30 +395,32 @@
     </div>
   </header>
 
-  <!-- Upload -->
+  <!-- Upload (fallback when data.json can't be fetched, e.g. opened from disk) -->
   <div class="upload-section" id="upload-zone" onclick="document.getElementById('file-input').click()">
     <div class="upload-icon">📂</div>
-    <h2>Load your history CSV</h2>
-    <p>Drop <code>all_rates_history.csv</code> here, or click to browse</p>
+    <h2 id="upload-title">Loading archive…</h2>
+    <p>If it doesn't load, drop <code>all_rates_history.csv</code> here or click to browse</p>
     <button class="upload-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
-      Choose File
+      Choose CSV
     </button>
     <input type="file" id="file-input" accept=".csv" />
   </div>
 
-  <!-- Dashboard (hidden until CSV loaded) -->
   <div id="dashboard" class="dashboard-hidden">
 
-    <!-- KPIs -->
     <div class="kpi-grid" id="kpi-grid"></div>
 
-    <!-- Charts -->
+    <div id="health-section">
+      <div class="section-title">Pipeline health · latest run</div>
+      <div class="health-grid" id="health-grid"></div>
+    </div>
+
     <div class="charts-grid">
       <div class="chart-card full">
         <div class="chart-header">
           <div>
             <div class="chart-title">Exchange Rate Trend</div>
-            <div class="chart-subtitle">Daily USD → INR across all banks</div>
+            <div class="chart-subtitle" id="trend-subtitle">Each bank's headline USD → INR rate · ✕ = quarantined as suspect</div>
           </div>
           <div class="bank-legend">
             <div class="legend-item"><div class="legend-dot" style="background:var(--sbi)"></div>SBI</div>
@@ -414,322 +434,285 @@
       <div class="chart-card">
         <div class="chart-header">
           <div>
-            <div class="chart-title">Rate Distribution</div>
-            <div class="chart-subtitle">Spread across slabs</div>
+            <div class="chart-title">Day-over-Day Change</div>
+            <div class="chart-subtitle">% change vs previous observation, headline rates</div>
           </div>
         </div>
-        <canvas id="dist-chart" height="220"></canvas>
+        <canvas id="dod-chart" height="220"></canvas>
       </div>
 
       <div class="chart-card">
         <div class="chart-header">
           <div>
-            <div class="chart-title">Bank Comparison</div>
-            <div class="chart-subtitle">Average rate by bank</div>
+            <div class="chart-title">Cross-Bank Spread</div>
+            <div class="chart-subtitle">Max − min headline rate per day (₹)</div>
           </div>
         </div>
-        <canvas id="bank-chart" height="220"></canvas>
+        <canvas id="spread-chart" height="220"></canvas>
       </div>
     </div>
 
-    <!-- Table -->
+    <div class="table-card" id="anomaly-card" style="margin-bottom:28px">
+      <div class="table-header"><div class="table-title">Data-quality flags</div></div>
+      <div class="anomaly-list" id="anomaly-list" style="padding:0 20px 16px"></div>
+    </div>
+
     <div class="table-card">
       <div class="table-header">
-        <div class="table-title">Recent Records</div>
+        <div class="table-title">Recent Records <span style="color:var(--muted);font-size:12px">(latest 60)</span></div>
         <div class="filter-row" id="bank-filters"></div>
       </div>
       <div class="scroll-table">
         <table>
           <thead>
-            <tr>
-              <th>Date</th>
-              <th>Bank</th>
-              <th>Slab / Type</th>
-              <th>USD → INR Rate</th>
-              <th>Δ vs Prev Day</th>
-            </tr>
+            <tr><th>Date</th><th>Bank</th><th>Slab / Type</th><th>USD → INR Rate</th><th>Δ vs Prev Obs.</th><th>Status</th></tr>
           </thead>
           <tbody id="rate-table-body"></tbody>
         </table>
       </div>
     </div>
-  </div><!-- /dashboard -->
+  </div>
 
   <footer>
-    Forex Rate Archiver &nbsp;·&nbsp; Built with Python + GitHub Actions &nbsp;·&nbsp;
-    Data sourced from SBI New York, HDFC Bank, ICICI Bank
+    Forex Rate Archiver &nbsp;·&nbsp; Python · SQLite · GitHub Actions &nbsp;·&nbsp;
+    Data: SBI New York, HDFC Bank, ICICI Bank published card rates
   </footer>
 </div>
 
 <script>
-// ── Chart.js defaults ────────────────────────────────────────────────────────
 Chart.defaults.color = '#64748b';
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.font.size = 11;
 
 const BANK_COLORS = { SBI: '#00d4ff', HDFC: '#ff6b35', ICICI: '#a78bfa' };
+const DATA_URLS = [
+  'data.json',
+  'https://raw.githubusercontent.com/Pranjal-agl/forex-rate-archiver/main/dashboard/data.json',
+];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-let allData = [];
+let allData = [];        // {Date, Bank, Slab_Type, Rate, Status, Delta, Pct}
+let meta = { headline: {}, spread: [], anomalies: [], health: [], reliability: [], generated: null };
 let activeBank = 'ALL';
 let charts = {};
 
-// ── File input ───────────────────────────────────────────────────────────────
+// ── Loading ──────────────────────────────────────────────────────────────────
+async function autoLoad() {
+  for (const url of DATA_URLS) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const j = await res.json();
+      allData = j.rates.map(r => ({ Date: r.d, Bank: r.b, Slab_Type: r.l, Rate: r.r, Status: r.s, Delta: r.dd, Pct: r.pc }));
+      meta = {
+        headline: Object.fromEntries(j.headline.map(h => [h.bank, h.label])),
+        spread: j.spread, anomalies: j.anomalies, health: j.health_latest,
+        reliability: j.reliability, generated: j.generated_at,
+      };
+      document.getElementById('upload-zone').classList.add('compact');
+      document.getElementById('upload-title').textContent = 'Live archive loaded · or drop a CSV to inspect another file';
+      return show();
+    } catch (e) { /* try next */ }
+  }
+  document.getElementById('upload-title').textContent = 'Load your history CSV';
+}
+
 const fileInput = document.getElementById('file-input');
 const uploadZone = document.getElementById('upload-zone');
-
-fileInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (file) loadCSV(file);
-});
-
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadCSV(e.target.files[0]); });
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
 uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
 uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.style.borderColor = '';
-  const file = e.dataTransfer.files[0];
-  if (file && file.name.endsWith('.csv')) loadCSV(file);
+  e.preventDefault(); uploadZone.style.borderColor = '';
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.csv')) loadCSV(f);
 });
 
 function loadCSV(file) {
   Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    dynamicTyping: true,
+    header: true, skipEmptyLines: true, dynamicTyping: true,
     complete: ({ data }) => {
-      allData = data.filter(r => r.Rate && r.Date && r.Bank);
-      allData.forEach(r => r._date = new Date(r.Date));
-      allData.sort((a, b) => a._date - b._date);
-
-      uploadZone.classList.add('has-data');
-      document.getElementById('dashboard').classList.remove('dashboard-hidden');
-      document.getElementById('last-updated').textContent =
-        'Latest: ' + allData[allData.length - 1]?.Date;
-
-      renderAll();
+      allData = data.filter(r => r.Rate && r.Date && r.Bank).map(r => ({ ...r, Status: r.Status || 'ok' }));
+      allData.sort((a, b) => a.Date.localeCompare(b.Date));
+      // derive deltas per series (previous observation of the same bank + slab)
+      const last = {};
+      allData.forEach(r => {
+        const k = r.Bank + '|' + r.Slab_Type, p = last[k];
+        r.Delta = p != null ? +(r.Rate - p).toFixed(4) : null;
+        r.Pct = p != null ? +(100 * (r.Rate / p - 1)).toFixed(4) : null;
+        last[k] = r.Rate;
+      });
+      meta = { headline: {}, spread: [], anomalies: [], health: [], reliability: [], generated: null };
+      show();
     }
   });
 }
 
+function show() {
+  allData.sort((a, b) => a.Date.localeCompare(b.Date));
+  document.getElementById('dashboard').classList.remove('dashboard-hidden');
+  const latest = allData[allData.length - 1]?.Date;
+  document.getElementById('last-updated').textContent =
+    'Latest: ' + latest + (meta.generated ? ' · built ' + meta.generated.slice(0, 16).replace('T', ' ') + ' UTC' : '');
+  renderAll();
+}
+
+// headline series per bank: configured label, else the bank's most common label
+function headlineRows(bank) {
+  let label = meta.headline[bank];
+  if (!label || !allData.some(r => r.Bank === bank && r.Slab_Type === label)) {
+    const c = {};
+    allData.filter(r => r.Bank === bank).forEach(r => c[r.Slab_Type] = (c[r.Slab_Type] || 0) + 1);
+    label = Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0];
+  }
+  return allData.filter(r => r.Bank === bank && r.Slab_Type === label);
+}
+const banksOf = () => [...new Set(allData.map(r => r.Bank))].sort();
+
 // ── Render ───────────────────────────────────────────────────────────────────
 function renderAll() {
-  renderKPIs();
-  renderTrendChart();
-  renderDistChart();
-  renderBankChart();
-  renderTable();
-  renderBankFilters();
+  renderKPIs(); renderHealth(); renderTrendChart(); renderDoDChart(); renderSpreadChart();
+  renderAnomalies(); renderBankFilters(); renderTable();
 }
 
 function renderKPIs() {
-  const latest = allData[allData.length - 1];
-  const latestDate = latest?.Date;
-  const todayRows = allData.filter(r => r.Date === latestDate);
-  const prevDate = [...new Set(allData.map(r => r.Date))].slice(-2, -1)[0];
-  const prevRows = allData.filter(r => r.Date === prevDate);
+  const cards = banksOf().map(bank => {
+    const rows = headlineRows(bank).filter(r => r.Status === 'ok');
+    const r = rows[rows.length - 1];
+    if (!r) return '';
+    const cls = (r.Delta ?? 0) >= 0 ? 'up' : 'down';
+    return `<div class="kpi-card ${bank.toLowerCase()}">
+      <div class="kpi-label">${esc(bank)} · ${esc(r.Slab_Type)}</div>
+      <div class="kpi-value" style="color:var(--${bank.toLowerCase()})">₹${r.Rate.toFixed(2)}</div>
+      ${r.Delta != null ? `<span class="kpi-delta ${cls}">${r.Delta >= 0 ? '▲' : '▼'} ${Math.abs(r.Delta).toFixed(2)} (${r.Pct >= 0 ? '+' : ''}${r.Pct.toFixed(2)}%)</span>` : ''}
+      <div class="kpi-sub">as of ${esc(r.Date)}</div>
+    </div>`;
+  }).join('');
+  const days = new Set(allData.map(r => r.Date)).size;
+  const suspect = allData.filter(r => r.Status === 'suspect').length;
+  document.getElementById('kpi-grid').innerHTML = cards + `
+    <div class="kpi-card all"><div class="kpi-label">Days Archived</div>
+      <div class="kpi-value">${days}</div><div class="kpi-sub">${allData.length} records</div></div>
+    <div class="kpi-card all"><div class="kpi-label">Quarantined</div>
+      <div class="kpi-value" style="color:${suspect ? 'var(--down)' : 'var(--up)'}">${suspect}</div>
+      <div class="kpi-sub">rows flagged suspect</div></div>`;
+}
 
-  const avgRate = r => r.length ? (r.reduce((s, x) => s + x.Rate, 0) / r.length) : 0;
-  const todayAvg = avgRate(todayRows);
-  const prevAvg = avgRate(prevRows);
-  const delta = todayAvg - prevAvg;
-  const deltaSign = delta >= 0 ? '▲' : '▼';
-  const deltaClass = delta >= 0 ? 'up' : 'down';
-
-  const banks = [...new Set(allData.map(r => r.Bank))];
-  const totalDays = new Set(allData.map(r => r.Date)).size;
-
-  const grid = document.getElementById('kpi-grid');
-  grid.innerHTML = `
-    <div class="kpi-card all">
-      <div class="kpi-label">Today's Avg Rate</div>
-      <div class="kpi-value">₹${todayAvg.toFixed(2)}</div>
-      <span class="kpi-delta ${deltaClass}">${deltaSign} ${Math.abs(delta).toFixed(4)}</span>
-    </div>
-    ${banks.map(bank => {
-      const bankToday = todayRows.filter(r => r.Bank === bank);
-      const bankAvg = avgRate(bankToday);
-      return `
-        <div class="kpi-card ${bank.toLowerCase()}">
-          <div class="kpi-label">${bank} Latest</div>
-          <div class="kpi-value" style="color:var(--${bank.toLowerCase()})">
-            ${bankAvg ? '₹' + bankAvg.toFixed(2) : '—'}
-          </div>
-          <div class="kpi-sub">${bankToday.length} record(s) today</div>
-        </div>`;
-    }).join('')}
-    <div class="kpi-card all">
-      <div class="kpi-label">Days Archived</div>
-      <div class="kpi-value">${totalDays}</div>
-      <div class="kpi-sub">${allData.length} total records</div>
-    </div>
-  `;
+function renderHealth() {
+  const sec = document.getElementById('health-section');
+  if (!meta.health.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  const rel = Object.fromEntries(meta.reliability.map(r => [r.source, r]));
+  document.getElementById('health-grid').innerHTML = meta.health.map(h => {
+    const r = rel[h.source] || {};
+    return `<div class="health-card">
+      <div class="src">${esc(h.source.toUpperCase())}<span class="pill ${h.ok ? 'ok' : 'bad'}">${h.ok ? 'OK' : 'FAILED'}</span></div>
+      <div class="meta">as of ${esc(h.as_of || '—')} · ${h.records} rows · ${h.latency_s?.toFixed?.(1) ?? '—'}s · ${h.attempts} attempt(s)<br>
+        ${r.runs ? `success ${r.success_pct}% over last ${r.runs} runs` : ''}</div>
+      ${h.ok ? '' : `<div class="err">${esc(h.error_type)}: ${esc(h.error)}</div>`}
+    </div>`;
+  }).join('');
 }
 
 function renderTrendChart() {
   const dates = [...new Set(allData.map(r => r.Date))];
-  const banks = [...new Set(allData.map(r => r.Bank))];
-
-  const datasets = banks.map(bank => {
+  const datasets = [];
+  banksOf().forEach(bank => {
     const color = BANK_COLORS[bank] || '#888';
-    const data = dates.map(d => {
-      const rows = allData.filter(r => r.Date === d && r.Bank === bank);
-      return rows.length ? +(rows.reduce((s, r) => s + r.Rate, 0) / rows.length).toFixed(4) : null;
-    });
-    return {
-      label: bank,
-      data,
-      borderColor: color,
-      backgroundColor: color + '18',
-      borderWidth: 2,
-      pointRadius: dates.length > 30 ? 0 : 3,
-      pointHoverRadius: 5,
-      tension: 0.3,
-      fill: false,
-      spanGaps: true,
-    };
+    const rows = headlineRows(bank);
+    const ok = Object.fromEntries(rows.filter(r => r.Status === 'ok').map(r => [r.Date, r.Rate]));
+    const bad = Object.fromEntries(rows.filter(r => r.Status === 'suspect').map(r => [r.Date, r.Rate]));
+    datasets.push({ label: bank, data: dates.map(d => ok[d] ?? null), borderColor: color, backgroundColor: color + '18',
+      borderWidth: 2, pointRadius: dates.length > 40 ? 0 : 2, tension: 0.25, spanGaps: true });
+    if (Object.keys(bad).length) datasets.push({ label: bank + ' (suspect)', data: dates.map(d => bad[d] ?? null),
+      showLine: false, pointStyle: 'crossRot', pointRadius: 6, borderColor: '#ef4444', borderWidth: 2 });
   });
-
   if (charts.trend) charts.trend.destroy();
   charts.trend = new Chart(document.getElementById('trend-chart'), {
-    type: 'line',
-    data: { labels: dates, datasets },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#111827',
-          borderColor: '#1e2d45',
-          borderWidth: 1,
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ₹${ctx.parsed.y?.toFixed(4) ?? '—'}`
-          }
-        }
-      },
-      scales: {
-        x: { grid: { color: '#1e2d45' }, ticks: { maxTicksLimit: 10 } },
-        y: { grid: { color: '#1e2d45' }, ticks: { callback: v => '₹' + v } }
-      }
-    }
+    type: 'line', data: { labels: dates, datasets },
+    options: { responsive: true, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', borderColor: '#1e2d45', borderWidth: 1,
+        filter: i => i.parsed.y != null, callbacks: { label: c => ` ${c.dataset.label}: ₹${c.parsed.y.toFixed(2)}` } } },
+      scales: { x: { grid: { color: '#1e2d45' }, ticks: { maxTicksLimit: 10 } },
+                y: { grid: { color: '#1e2d45' }, ticks: { callback: v => '₹' + v } } } }
   });
 }
 
-function renderDistChart() {
-  const labels = [...new Set(allData.map(r => r.Slab_Type))].slice(0, 12);
-  const data = labels.map(l => {
-    const rows = allData.filter(r => r.Slab_Type === l);
-    return +(rows.reduce((s, r) => s + r.Rate, 0) / rows.length).toFixed(4);
+function renderDoDChart() {
+  const dates = [...new Set(allData.map(r => r.Date))].slice(-30);
+  const datasets = banksOf().map(bank => {
+    const m = Object.fromEntries(headlineRows(bank).filter(r => r.Status === 'ok').map(r => [r.Date, r.Pct]));
+    return { label: bank, data: dates.map(d => m[d] ?? null), backgroundColor: (BANK_COLORS[bank] || '#888') + 'cc', borderRadius: 3 };
   });
-  const colors = labels.map((_, i) => `hsl(${200 + i * 22}, 70%, 60%)`);
-
-  if (charts.dist) charts.dist.destroy();
-  charts.dist = new Chart(document.getElementById('dist-chart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Avg Rate',
-        data,
-        backgroundColor: colors,
-        borderRadius: 5,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: '#1e2d45' }, ticks: { maxRotation: 30 } },
-        y: {
-          grid: { color: '#1e2d45' },
-          ticks: { callback: v => '₹' + v },
-          min: Math.min(...data) - 0.5
-        }
-      }
-    }
+  if (charts.dod) charts.dod.destroy();
+  charts.dod = new Chart(document.getElementById('dod-chart'), {
+    type: 'bar', data: { labels: dates, datasets },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y?.toFixed(3)}%` } } },
+      scales: { x: { grid: { color: '#1e2d45' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+                y: { grid: { color: '#1e2d45' }, ticks: { callback: v => v + '%' } } } }
   });
 }
 
-function renderBankChart() {
-  const banks = [...new Set(allData.map(r => r.Bank))];
-  const avgs = banks.map(b => {
-    const rows = allData.filter(r => r.Bank === b);
-    return +(rows.reduce((s, r) => s + r.Rate, 0) / rows.length).toFixed(4);
+function renderSpreadChart() {
+  let pts = meta.spread.filter(s => s.banks >= 2).map(s => ({ x: s.rate_date, y: s.spread }));
+  if (!pts.length) {   // CSV mode: compute from headline rows
+    const by = {};
+    banksOf().forEach(b => headlineRows(b).filter(r => r.Status === 'ok').forEach(r => (by[r.Date] ||= []).push(r.Rate)));
+    pts = Object.entries(by).filter(([, v]) => v.length >= 2).sort().map(([d, v]) => ({ x: d, y: +(Math.max(...v) - Math.min(...v)).toFixed(4) }));
+  }
+  if (charts.spread) charts.spread.destroy();
+  const sub = document.querySelector('#spread-chart').closest('.chart-card').querySelector('.chart-subtitle');
+  sub.textContent = pts.length ? 'Max − min headline rate per day (₹), clean rows only'
+                               : 'Needs two banks with clean data on the same day; fills in as live runs accumulate';
+  charts.spread = new Chart(document.getElementById('spread-chart'), {
+    type: 'line', data: { labels: pts.map(p => p.x), datasets: [{ label: 'Spread', data: pts.map(p => p.y),
+      borderColor: '#7c3aed', backgroundColor: '#7c3aed22', fill: true, tension: 0.25, pointRadius: 2 }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#1e2d45' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+                y: { grid: { color: '#1e2d45' }, beginAtZero: true, ticks: { callback: v => '₹' + v } } } }
   });
+}
 
-  if (charts.bank) charts.bank.destroy();
-  charts.bank = new Chart(document.getElementById('bank-chart'), {
-    type: 'doughnut',
-    data: {
-      labels: banks,
-      datasets: [{
-        data: avgs,
-        backgroundColor: banks.map(b => BANK_COLORS[b] || '#888'),
-        borderWidth: 2,
-        borderColor: '#111827',
-        hoverOffset: 8,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 16, boxWidth: 10 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ₹${ctx.parsed.toFixed(4)}` } }
-      }
-    }
-  });
+function renderAnomalies() {
+  const card = document.getElementById('anomaly-card');
+  const list = meta.anomalies.length ? meta.anomalies
+    : allData.filter(r => r.Status === 'suspect').map(r => ({ rate_date: r.Date, bank: r.Bank, label: r.Slab_Type, method: 'flag', reason: 'suspect' }));
+  if (!list.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  // collapse long runs (e.g. 35 stale days) into one line per series+method
+  const groups = {};
+  list.forEach(a => { const k = `${a.bank}|${a.label}|${a.method}`; (groups[k] ||= []).push(a); });
+  document.getElementById('anomaly-list').innerHTML = Object.values(groups).map(g => {
+    const ds = g.map(a => a.rate_date).sort();
+    const span = ds.length > 1 ? `${ds[0]} → ${ds[ds.length - 1]} (${ds.length} rows)` : ds[0];
+    return `<div><span class="m">[${esc(g[0].method)}]</span> ${esc(g[0].bank)} · ${esc(g[0].label)} · ${esc(span)} — ${esc(g[g.length - 1].reason)}</div>`;
+  }).join('');
 }
 
 function renderBankFilters() {
-  const banks = ['ALL', ...[...new Set(allData.map(r => r.Bank))]];
-  const row = document.getElementById('bank-filters');
-  row.innerHTML = banks.map(b => `
-    <button class="filter-btn ${b === activeBank ? 'active' : ''}"
-      onclick="setFilter('${b}')">${b}</button>
-  `).join('');
+  const banks = ['ALL', ...banksOf()];
+  document.getElementById('bank-filters').innerHTML = banks.map(b =>
+    `<button class="filter-btn ${b === activeBank ? 'active' : ''}" onclick="setFilter('${b}')">${b}</button>`).join('');
 }
-
-function setFilter(bank) {
-  activeBank = bank;
-  renderBankFilters();
-  renderTable();
-}
+function setFilter(bank) { activeBank = bank; renderBankFilters(); renderTable(); }
 
 function renderTable() {
-  const filtered = activeBank === 'ALL'
-    ? allData
-    : allData.filter(r => r.Bank === activeBank);
-
-  // Show last 100 rows, most recent first
-  const recent = [...filtered].reverse().slice(0, 100);
-
-  // Build prev-day lookup for delta
-  const byKey = {};
-  allData.forEach(r => { byKey[`${r.Bank}|${r.Slab_Type}|${r.Date}`] = r.Rate; });
-  const dates = [...new Set(allData.map(r => r.Date))];
-
-  const tbody = document.getElementById('rate-table-body');
-  tbody.innerHTML = recent.map(r => {
-    const dateIdx = dates.indexOf(r.Date);
-    const prevDate = dateIdx > 0 ? dates[dateIdx - 1] : null;
-    const prevRate = prevDate ? byKey[`${r.Bank}|${r.Slab_Type}|${prevDate}`] : null;
-    let deltaHtml = '<span style="color:var(--muted)">—</span>';
-    if (prevRate != null) {
-      const d = r.Rate - prevRate;
-      const cls = d >= 0 ? 'up' : 'down';
-      const sign = d >= 0 ? '+' : '';
-      deltaHtml = `<span style="color:var(--${cls})">${sign}${d.toFixed(4)}</span>`;
-    }
-    return `<tr>
-      <td>${r.Date}</td>
-      <td><span class="bank-badge ${r.Bank}">${r.Bank}</span></td>
-      <td>${r.Slab_Type}</td>
-      <td style="font-weight:600">₹ ${r.Rate.toFixed(4)}</td>
-      <td>${deltaHtml}</td>
-    </tr>`;
+  const rows = (activeBank === 'ALL' ? allData : allData.filter(r => r.Bank === activeBank)).slice().reverse().slice(0, 60);
+  const reasons = {};
+  meta.anomalies.forEach(a => { (reasons[`${a.rate_date}|${a.bank}|${a.label}`] ||= []).push(`${a.method}: ${a.reason}`); });
+  document.getElementById('rate-table-body').innerHTML = rows.map(r => {
+    let d = '<span style="color:var(--muted)">—</span>';
+    if (r.Delta != null) d = `<span style="color:var(--${r.Delta >= 0 ? 'up' : 'down'})">${r.Delta >= 0 ? '+' : ''}${r.Delta.toFixed(2)}</span>`;
+    const why = (reasons[`${r.Date}|${r.Bank}|${r.Slab_Type}`] || ['flagged by anomaly detection']).join('\n');
+    const st = r.Status === 'suspect' ? `<span class="suspect-badge" title="${esc(why)}">suspect</span>` : '<span class="pill ok">ok</span>';
+    return `<tr class="${r.Status === 'suspect' ? 'suspect' : ''}">
+      <td>${esc(r.Date)}</td><td><span class="bank-badge ${esc(r.Bank)}">${esc(r.Bank)}</span></td>
+      <td>${esc(r.Slab_Type)}</td><td style="font-weight:600">₹ ${r.Rate.toFixed(2)}</td><td>${d}</td><td>${st}</td></tr>`;
   }).join('');
 }
+
+autoLoad();
 </script>
 </body>
 </html>
