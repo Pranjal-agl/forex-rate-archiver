@@ -27,6 +27,7 @@ class Settings:
     mad_threshold: float = 6.0            # flag robust z-score above this
     mad_window: int = 20                  # rolling window (observations) for median/MAD
     mad_floor_pct: float = 0.15           # MAD floor in percent of level; stops tiny-MAD blowups
+    max_gap_days: int = 10                # longer outage => restart the baseline instead of comparing across it
     use_peers: bool = True                # score each bank's move net of the other banks' median move
     stale_days: int = 5                   # identical value this many observations in a row => stale
 

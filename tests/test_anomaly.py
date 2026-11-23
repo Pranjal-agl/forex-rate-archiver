@@ -107,3 +107,13 @@ def test_evaluation_reports_sane_precision_recall():
     assert pct.recall.is_monotonic_decreasing
     st = evaluate_stale(Settings(), n_series=10)
     assert st.loc[st.stale_days == 5, "recall"].item() > 0.9
+
+
+def test_long_outage_restarts_baseline_instead_of_flagging_drift():
+    """Regression: after the May-Nov outage, Nov values were flagged as 3.4% jumps vs May."""
+    days = [date(2026, 5, 1) + timedelta(days=i) for i in range(15)] + [date(2026, 11, 20), date(2026, 11, 23)]
+    rates = [95.0 + 0.01 * (i % 3) for i in range(15)] + [91.87, 91.90]
+    df = pd.DataFrame({"rate_date": days, "bank": "SBI", "label": "x", "rate": rates})
+    assert detect_frame(df, Settings()).empty
+    df.loc[16, "rate"] = 96.5   # but a real jump right after the restart is still caught
+    assert detect_frame(df, Settings()).rate_date.tolist() == [date(2026, 11, 23)]

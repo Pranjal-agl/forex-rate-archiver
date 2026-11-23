@@ -45,13 +45,18 @@ class Flag:
 
 
 def detect_jumps(values: np.ndarray, *, method: str, pct_threshold: float, mad_threshold: float,
-                 mad_window: int, mad_floor_pct: float, peer_index: np.ndarray | None = None) -> list[Flag]:
+                 mad_window: int, mad_floor_pct: float, peer_index: np.ndarray | None = None,
+                 new_segment: np.ndarray | None = None) -> list[Flag]:
     """Online jump detection against the last accepted value. ``method`` is pct, mad or both.
 
     ``peer_index`` (optional, aligned with ``values``) is the cumulative log
     move of the *other* banks. When given, each move is scored net of what the
     peers did over the same interval, so a market-wide move is not an anomaly
     but a move only this source shows is.
+
+    ``new_segment`` (optional bool array) marks observations that follow a long
+    outage. Comparing them with a value from months ago would flag ordinary
+    drift, so the baseline restarts there instead.
     """
     v = np.asarray(values, dtype=float)
     peer = None if peer_index is None else np.asarray(peer_index, dtype=float)
@@ -68,6 +73,9 @@ def detect_jumps(values: np.ndarray, *, method: str, pct_threshold: float, mad_t
     tag = ""
 
     for i in range(1, len(v)):
+        if new_segment is not None and new_segment[i]:
+            last_good, last_pos, pending, accepted = v[i], i, [], []
+            continue
         r = float(np.log(v[i] / last_good))
         if peer is not None and np.isfinite(peer[i]) and np.isfinite(peer[last_pos]):
             r -= float(peer[i] - peer[last_pos])
@@ -142,8 +150,9 @@ def _jump_kwargs(settings: Settings) -> dict:
             "mad_floor_pct": settings.mad_floor_pct}
 
 
-def detect_series(values: np.ndarray, settings: Settings, peer_index: np.ndarray | None = None) -> list[Flag]:
-    return (detect_jumps(values, peer_index=peer_index, **_jump_kwargs(settings))
+def detect_series(values: np.ndarray, settings: Settings, peer_index: np.ndarray | None = None,
+                  new_segment: np.ndarray | None = None) -> list[Flag]:
+    return (detect_jumps(values, peer_index=peer_index, new_segment=new_segment, **_jump_kwargs(settings))
             + detect_stale(values, stale_days=settings.stale_days))
 
 
@@ -214,7 +223,9 @@ def detect_frame(df: pd.DataFrame, settings: Settings) -> pd.DataFrame:
             pidx = None
             if peers and bank in peers:
                 pidx = peers[bank].reindex(g["rate_date"]).to_numpy()
-            for f in detect_series(g["rate"].to_numpy(), settings, pidx):
+            gap_days = pd.to_datetime(g["rate_date"]).diff().dt.days.to_numpy()
+            new_seg = np.nan_to_num(gap_days, nan=0) > settings.max_gap_days
+            for f in detect_series(g["rate"].to_numpy(), settings, pidx, new_seg):
                 out.append({"rate_date": g.at[f.pos, "rate_date"], "bank": bank, "label": label, "method": f.method,
                             "score": f.score, "threshold": f.threshold, "reason": f.reason})
         return out
