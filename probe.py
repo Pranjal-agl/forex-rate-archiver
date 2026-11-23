@@ -9,15 +9,12 @@ H = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/pd
 CANDIDATES = {
   "sbiny_page": "https://sbinewyork.statebank/exchange-rate",
   "sbi_pdf_new": "https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf",
-  "sbi_pdf_old": "https://www.sbi.co.in/documents/16012/1400784/FOREX_CARD_RATES.pdf",
   "hdfc_pdf_new": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/resources/forex-rates/forex-rates.pdf",
-  "hdfc_pdf_v": "https://v.hdfcbank.com/content/dam/hdfc-aem-microsites/common-pdfs/pdf/forex_rates/rates.pdf",
-  "hdfc_page_new": "https://www.hdfc.bank.in/personal/resources/rates-and-fees/forex-rates",
-  "hdfc_page_old": "https://www.hdfcbank.com/personal/resources/rates-and-fees/forex-rates",
-  "icici_card_old": "https://instantforex.icicibank.com/instantforex/forms/MicroCardRateView.aspx",
-  "icici_card_new": "https://instantforex.icici.bank.in/instantforex/forms/MicroCardRateView.aspx",
-  "icici_page_old": "https://www.icicibank.com/personal-banking/forex/forex-rates",
-  "icici_page_new": "https://www.icici.bank.in/personal-banking/forex/forex-rates",
+  "icici_corp_new": "https://www.icici.bank.in/corporate/global-markets/forex/forex-card-rate",
+  "icici_corp_old": "https://www.icicibank.com/corporate/global-markets/forex/forex-card-rate",
+  "icici_fac_old": "https://forex.icicibank.com/forexatclick/forms/MicroCardRateView.aspx",
+  "icici_fac_new": "https://forex.icici.bank.in/forexatclick/forms/MicroCardRateView.aspx",
+  "icici_if_new2": "https://instantforex.icici.bank.in/instantforex/Forms/MicroCardRateView.aspx",
 }
 summary = {}
 for name, url in CANDIDATES.items():

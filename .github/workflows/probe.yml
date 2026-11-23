@@ -2,6 +2,9 @@ name: probe-sources
 on:
   push:
     branches: [claude/probe-sources]
+    paths: [probe.py, .github/workflows/probe.yml]
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -12,6 +15,8 @@ jobs:
         with: { python-version: "3.11" }
       - run: pip install requests selenium
       - run: python probe.py
-      - uses: actions/upload-artifact@v4
+      - name: commit snapshots back to this throwaway branch
         if: always()
-        with: { name: probe_out, path: probe_out/ }
+        run: |
+          git config user.name probe-bot && git config user.email probe@users.noreply.github.com
+          git add probe_out && git commit -m "probe output" && git push
