@@ -1,150 +1,16 @@
 {
-  "sbiny_page": {
-    "url": "https://sbinewyork.statebank/exchange-rate",
+  "hdfc_pdf_current": {
+    "url": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/discover-products/interest-rates/hdfc-bank-treasury-forex-card-rates.pdf",
     "req": {
       "status": 200,
-      "final_url": "https://sbinewyork.statebank/exchange-rate",
-      "ctype": "text/html; charset=UTF-8",
-      "len": 95630,
-      "secs": 1.19
-    },
-    "sel": {
-      "title": "Exchange Rate - SBI - New York",
-      "final_url": "https://sbinewyork.statebank/exchange-rate",
-      "len": 131826,
-      "tables": 2,
-      "usd_hits": 14,
-      "pdf_links": [
-        "https://sbinewyork.statebank/documents/1989823/42907139/FAQS+Related+to+YONO+mobile+banking+application.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/Help+Documents.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/INR+Remittances.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/Pulling+Funds+through+ACH.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/USD+International+Remittances.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/USD+Local+Wires.pdf",
-        "https://sbinewyork.statebank/documents/1989823/42907139/YONO+Mobile+Banking+Registration.pdf"
-      ]
-    }
-  },
-  "sbi_pdf_new": {
-    "url": "https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf",
-    "req": {
-      "status": 200,
-      "final_url": "https://sbi.bank.in/documents/16012/1400784/FOREX_CARD_RATES.pdf",
+      "final_url": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/discover-products/interest-rates/hdfc-bank-treasury-forex-card-rates.pdf",
       "ctype": "application/pdf",
-      "len": 241292,
-      "secs": 2.16
+      "len": 209445,
+      "secs": 0.86
     },
     "sel": {
-      "len": 241292,
+      "len": 209445,
       "is_pdf": true
-    }
-  },
-  "hdfc_pdf_new": {
-    "url": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/resources/forex-rates/forex-rates.pdf",
-    "req": {
-      "status": 200,
-      "final_url": "https://www.hdfc.bank.in/content/dam/hdfcbankpws/in/en/personal-banking/resources/forex-rates/forex-rates.pdf",
-      "ctype": "application/pdf",
-      "len": 286920,
-      "secs": 0.17
-    },
-    "sel": {
-      "len": 286920,
-      "is_pdf": true
-    }
-  },
-  "icici_corp_new": {
-    "url": "https://www.icici.bank.in/corporate/global-markets/forex/forex-card-rate",
-    "req": {
-      "status": 200,
-      "final_url": "https://www.icici.bank.in/business-banking/global-markets/forex/forex-card-rates",
-      "ctype": "text/html;charset=utf-8",
-      "len": 1088929,
-      "secs": 4.9
-    },
-    "sel": {
-      "title": "Forex Rates | Foreign Exchange Rate in India \u2013 ICICI Bank",
-      "final_url": "https://www.icici.bank.in/business-banking/global-markets/forex/forex-card-rates",
-      "len": 1865786,
-      "tables": 7,
-      "usd_hits": 28,
-      "pdf_links": [
-        ",\"applyText\":\"APPLY\",\"applyLink\":\"/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/ssy-account-opening-form.pdf",
-        ",\"detailsLink\":\"/content/dam/icicibank/india/managed-assets/docs/pdf/FX-Retail-TnC.pdf",
-        ",\"investLink\":\"/content/dam/icicibank/india/managed-assets/docs/pdf/FX-Retail-TnC.pdf",
-        ",\"investLink\":\"/content/dam/icicibank/india/managed-assets/investment/doc/ssy-account-opening-form.pdf",
-        "/content/dam/icicibank/india/managed-assets/docs/pdf/monthly-complaints-debenture-trustees.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/code_of_business_conduct_ethics.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/complaint-form-step4.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/customer-education-literature-on-smairac-norms.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/fair-practices-code-april-2023.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/summary-of-fx-services-for-customers.pdf"
-      ]
-    }
-  },
-  "icici_corp_old": {
-    "url": "https://www.icicibank.com/corporate/global-markets/forex/forex-card-rate",
-    "req": {
-      "status": 200,
-      "final_url": "https://www.icici.bank.in/business-banking/global-markets/forex/forex-card-rates",
-      "ctype": "text/html;charset=utf-8",
-      "len": 1088929,
-      "secs": 0.45
-    },
-    "sel": {
-      "title": "Forex Rates | Foreign Exchange Rate in India \u2013 ICICI Bank",
-      "final_url": "https://www.icici.bank.in/business-banking/global-markets/forex/forex-card-rates",
-      "len": 1865834,
-      "tables": 7,
-      "usd_hits": 28,
-      "pdf_links": [
-        ",\"applyText\":\"APPLY\",\"applyLink\":\"/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/ssy-account-opening-form.pdf",
-        ",\"detailsLink\":\"/content/dam/icicibank/india/managed-assets/docs/pdf/FX-Retail-TnC.pdf",
-        ",\"investLink\":\"/content/dam/icicibank/india/managed-assets/docs/pdf/FX-Retail-TnC.pdf",
-        ",\"investLink\":\"/content/dam/icicibank/india/managed-assets/investment/doc/ssy-account-opening-form.pdf",
-        "/content/dam/icicibank/india/managed-assets/docs/pdf/monthly-complaints-debenture-trustees.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/code_of_business_conduct_ethics.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/complaint-form-step4.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/customer-education-literature-on-smairac-norms.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/fair-practices-code-april-2023.pdf",
-        "/content/dam/icicibank/india/managed-assets/revamp-page-images/docs/pdf/summary-of-fx-services-for-customers.pdf"
-      ]
-    }
-  },
-  "icici_fac_old": {
-    "url": "https://forex.icicibank.com/forexatclick/forms/MicroCardRateView.aspx",
-    "req": {
-      "error": "ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\\'forex.icicibank.com\\', port=443): Max retries exceeded with url: /forexatclick/forms/MicroCardRateView.aspx (Caused by NameResolutionError(\"HTTPSConnection(host=\\'forex.icicibank.com\\', port=443): Failed to resolve \\'forex.icicibank.com\\' ([Errno -2] Name or service not known)\"))'))"
-    },
-    "sel": {
-      "error": "214f99486c1 <unknown>\n#14 0x6214f9903557 <unknown>\n#15 0x6214f990286e <unknown>\n#16 0x6214f9903341 <unknown>\n#17 0x6214f9f5579c <unknown>\n#18 0x6214f9f53fcd <unknown>\n#19 0x6214f9f3edf5 <unknown>\n#20 0x6214f9f54c0a <unknown>\n#21 0x6214f9f27b99 <unknown>\n#22 0x6214f9f7d318 <unknown>\n#23 0x6214f9f7d4b5 <unknown>\n#24 0x6214f9f91633 <unknown>\n#25 0x75db84cabdeb <unknown>\n#26 0x75db84d3f4dc <unknown>\n\n"
-    }
-  },
-  "icici_fac_new": {
-    "url": "https://forex.icici.bank.in/forexatclick/forms/MicroCardRateView.aspx",
-    "req": {
-      "error": "ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\\'forex.icici.bank.in\\', port=443): Max retries exceeded with url: /forexatclick/forms/MicroCardRateView.aspx (Caused by NameResolutionError(\"HTTPSConnection(host=\\'forex.icici.bank.in\\', port=443): Failed to resolve \\'forex.icici.bank.in\\' ([Errno -2] Name or service not known)\"))'))"
-    },
-    "sel": {
-      "error": "214f99486c1 <unknown>\n#14 0x6214f9903557 <unknown>\n#15 0x6214f990286e <unknown>\n#16 0x6214f9903341 <unknown>\n#17 0x6214f9f5579c <unknown>\n#18 0x6214f9f53fcd <unknown>\n#19 0x6214f9f3edf5 <unknown>\n#20 0x6214f9f54c0a <unknown>\n#21 0x6214f9f27b99 <unknown>\n#22 0x6214f9f7d318 <unknown>\n#23 0x6214f9f7d4b5 <unknown>\n#24 0x6214f9f91633 <unknown>\n#25 0x75db84cabdeb <unknown>\n#26 0x75db84d3f4dc <unknown>\n\n"
-    }
-  },
-  "icici_if_new2": {
-    "url": "https://instantforex.icici.bank.in/instantforex/Forms/MicroCardRateView.aspx",
-    "req": {
-      "status": 200,
-      "final_url": "https://instantforex.icici.bank.in/instantforex/Forms/ErrorPage_404.aspx?param=err",
-      "ctype": "text/html; charset=utf-8",
-      "len": 11828,
-      "secs": 1.41
-    },
-    "sel": {
-      "title": "404 Error Page",
-      "final_url": "https://instantforex.icici.bank.in/instantforex/Forms/ErrorPage_404.aspx?param=err",
-      "len": 11736,
-      "tables": 1,
-      "usd_hits": 0,
-      "pdf_links": []
     }
   }
 }
