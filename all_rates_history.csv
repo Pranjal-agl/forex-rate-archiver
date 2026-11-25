@@ -253,3 +253,13 @@ SBI,"$2,500 to less than $5,000",92.11,2026-11-24,ok
 SBI,"$25,000 to less than $100,000",92.34,2026-11-24,ok
 SBI,"$5,000 to less than $25,000",92.23,2026-11-24,ok
 SBI,"less than $2,500",92.11,2026-11-24,ok
+HDFC,Cash Buying,90.02,2026-11-25,ok
+HDFC,Cash Selling,94.87,2026-11-25,ok
+HDFC,TT Buying,90.8,2026-11-25,ok
+HDFC,TT Selling,94.09,2026-11-25,ok
+ICICI,TT Buying,90.88,2026-11-25,ok
+ICICI,TT Selling,93.75,2026-11-25,ok
+SBI,"$2,500 to less than $5,000",91.43,2026-11-25,ok
+SBI,"$25,000 to less than $100,000",91.66,2026-11-25,ok
+SBI,"$5,000 to less than $25,000",91.55,2026-11-25,ok
+SBI,"less than $2,500",91.43,2026-11-25,ok
