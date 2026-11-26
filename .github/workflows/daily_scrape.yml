@@ -83,8 +83,11 @@ jobs:
           for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep $((i * 5)); done
           exit 1
 
+      # Alert housekeeping must never decide the job's colour: a GitHub API hiccup here
+      # (seen 2026-11-25) is not a pipeline failure. The final step below does that.
       - name: Open or update alert issue
         if: steps.run.outputs.needs_alert == 'true'
+        continue-on-error: true
         run: |
           gh label create "$ALERT_LABEL" --color B60205 --description "Automated forex pipeline alert" 2>/dev/null || true
           body="$(cat run_report.md)
@@ -99,13 +102,20 @@ jobs:
 
       - name: Close alert issue when healthy again
         if: steps.run.outputs.needs_alert == 'false'
+        continue-on-error: true
         run: |
-          for num in $(gh issue list --label "$ALERT_LABEL" --state open --json number -q '.[].number'); do
-            gh issue close "$num" --comment "✅ Run ${{ github.run_id }} is healthy again: all sources fetched, no new anomalies."
+          repo="${{ github.repository }}"
+          for num in $(gh api "repos/$repo/issues?labels=$ALERT_LABEL&state=open" -q '.[].number'); do
+            for i in 1 2 3; do
+              gh api "repos/$repo/issues/$num/comments" -f body="✅ Run ${{ github.run_id }} is healthy again: all sources fetched, no new anomalies." > /dev/null \
+                && gh api -X PATCH "repos/$repo/issues/$num" -f state=closed > /dev/null && break
+              sleep $((i * 10))
+            done
           done
 
       - name: Telegram alert (optional)
         if: steps.run.outputs.needs_alert == 'true' && env.TG_TOKEN != ''
+        continue-on-error: true
         run: |
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             --data-urlencode chat_id="$TG_CHAT" \

@@ -50,6 +50,15 @@ def test_hdfc_stale_pdf_parses_but_reports_its_old_date():
     assert sheet.as_of == date(2025, 1, 13)
 
 
+def test_hdfc_parses_sheet_published_without_spaces():
+    """Regression: on 2026-11-24 HDFC's PDF had all spaces stripped ('CurrencyType', 'T.T.Buying(Inw')."""
+    sheet = HDFC().parse(load("hdfc_nospaces_2026-11-24.pdf"))
+    assert sheet.as_of == date(2026, 11, 24)
+    d = as_dict(sheet)
+    assert set(d) == {"TT Buying", "TT Selling", "Cash Buying", "Cash Selling"}
+    assert d["TT Buying"] < d["TT Selling"] and 80 < d["TT Buying"] < 110
+
+
 def test_icici_parses_real_page():
     sheet = ICICI().parse(load(ICICI_HTML))
     assert sheet.as_of == date(2026, 11, 23)

@@ -20,13 +20,18 @@ from .base import ParsedSheet, Source, check_pair, norm, to_rate
 
 _DATE = re.compile(r"DATE:\s*(\d{2})[-/](\d{2})[-/](\d{4})", re.I)
 
-# output label -> predicate on the normalised header text
+# output label -> predicate on the header text, lowercased with ALL whitespace removed.
+# HDFC sometimes publishes the sheet without spaces ("T.T.Buying(Inw", "CurrencyType"), seen 2026-11-24.
 COLUMNS = {
-    "TT Buying": lambda h: h.startswith("t.t. buying"),
-    "TT Selling": lambda h: h.startswith("t.t. selling"),
-    "Cash Buying": lambda h: h == "cash buying",
-    "Cash Selling": lambda h: h == "cash selling",
+    "TT Buying": lambda h: h.startswith("t.t.buying"),
+    "TT Selling": lambda h: h.startswith("t.t.selling"),
+    "Cash Buying": lambda h: h == "cashbuying",
+    "Cash Selling": lambda h: h == "cashselling",
 }
+
+
+def _key(text: str | None) -> str:
+    return re.sub(r"\s+", "", text or "").lower()
 
 
 class HDFC(Source):
@@ -61,10 +66,10 @@ class HDFC(Source):
         as_of = datetime(int(m.group(3)), int(m.group(2)), int(m.group(1))).date()
 
         for table in tables:
-            header_idx = next((i for i, row in enumerate(table) if row and norm(row[0]).lower() == "currency type"), None)
+            header_idx = next((i for i, row in enumerate(table) if row and _key(row[0]) == "currencytype"), None)
             if header_idx is None:
                 continue
-            headers = [norm(h).lower() for h in table[header_idx]]
+            headers = [_key(h) for h in table[header_idx]]
             cols = {}
             for label, pred in COLUMNS.items():
                 idx = next((i for i, h in enumerate(headers) if pred(h)), None)
