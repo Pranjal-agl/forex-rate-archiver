@@ -273,3 +273,13 @@ HDFC,TT Buying,90.85,2026-11-26,ok
 HDFC,TT Selling,94.14,2026-11-26,ok
 ICICI,TT Buying,90.9,2026-11-26,ok
 ICICI,TT Selling,93.79,2026-11-26,ok
+HDFC,Cash Buying,90.3,2026-11-27,ok
+HDFC,Cash Selling,95.16,2026-11-27,ok
+HDFC,TT Buying,91.08,2026-11-27,ok
+HDFC,TT Selling,94.39,2026-11-27,ok
+ICICI,TT Buying,91.38,2026-11-27,ok
+ICICI,TT Selling,94.29,2026-11-27,ok
+SBI,"$2,500 to less than $5,000",92.19,2026-11-27,ok
+SBI,"$25,000 to less than $100,000",92.42,2026-11-27,ok
+SBI,"$5,000 to less than $25,000",92.31,2026-11-27,ok
+SBI,"less than $2,500",92.19,2026-11-27,ok
